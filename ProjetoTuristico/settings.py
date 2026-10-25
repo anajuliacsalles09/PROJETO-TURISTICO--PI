@@ -1,25 +1,20 @@
 
 """
-Django settings for ProjetoTuristico project.
+Configurações do projeto ProjetoTuristico.
 """
 
 import os
 from pathlib import Path
 
-import dj_database_url
-
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Segurança e ambiente
-
+# Segurança
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
-    "chave-temporaria-apenas-para-desenvolvimento"
+    "chave-local-apenas-desenvolvimento"
 )
 
-DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -33,14 +28,13 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get(
-        "CSRF_TRUSTED_ORIGINS", ""
+        "CSRF_TRUSTED_ORIGINS",
+        "https://ta-no-mapa.onrender.com"
     ).split(",")
     if origin.strip()
 ]
 
-
-# Aplicações
-
+# Aplicativos
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -54,11 +48,10 @@ INSTALLED_APPS = [
     "inicio",
 ]
 
+# Usuário personalizado do projeto
 AUTH_USER_MODEL = "core.Usuario"
 
-
-# Middleware
-
+# Middlewares
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -70,11 +63,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-
-# URLs e templates
-
 ROOT_URLCONF = "ProjetoTuristico.urls"
 
+# Templates
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -92,50 +83,49 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "ProjetoTuristico.wsgi.application"
 
-
-# Banco de dados
-# Localmente usa SQLite.
-# No Render, usa PostgreSQL quando DATABASE_URL estiver definida.
-
+# Banco de dados SQLite
 DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-    )
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
 }
 
-
 # Validação de senhas
-
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "MinimumLengthValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        ),
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        ),
     },
 ]
 
-
-# Idioma e fuso horário
-
+# Idioma, fuso horário e datas
 LANGUAGE_CODE = "pt-br"
-
 TIME_ZONE = "America/Bahia"
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Arquivos estáticos: CSS, JavaScript e imagens do próprio site
-
+# Arquivos estáticos: CSS, JavaScript e imagens do site
 STATIC_URL = "/static/"
 
 STATICFILES_DIRS = [
@@ -149,30 +139,23 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": (
+            "whitenoise.storage."
+            "CompressedManifestStaticFilesStorage"
+        ),
     },
 }
 
-
 # Arquivos enviados pelos usuários
-# Posteriormente configuraremos armazenamento persistente externo.
-
 MEDIA_URL = "/uploads/"
-
 MEDIA_ROOT = BASE_DIR / "uploads"
 
-
-# Autenticação
-
-LOGIN_URL = "login"
-
-LOGIN_REDIRECT_URL = "index"
-
-LOGOUT_REDIRECT_URL = "index"
-
-
-# Outras configurações
-
+# Configurações padrão
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "index"
+LOGOUT_REDIRECT_URL = "index"
+
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
