@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Destinos - Ta no Mapa{% endblock %}
+
+{% block page_slug %}destinos{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style-principal.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-destinos.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-modal.css' %}?v=2.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block content %}
+    <section class="hero-destinos">
+        <h1>Pontos Turisticos</h1>
+        <p>Descubra lugares incriveis ao redor do Brasil, cuidadosamente selecionados pela nossa comunidade</p>
+    </section>
+
+    <section class="filtros">
+        <div class="container-filtros">
+            <input
+                type="text"
+                id="filtroBusca"
+                class="filtro-busca-input"
+                placeholder="Buscar por nome, cidade ou tipo..."
+                oninput="filtrarPontos()">
+            <select id="filtroTipo" onchange="filtrarPontos()">
+                <option value="">Todos os tipos</option>
+                <option value="Parque">Parque</option>
+                <option value="Museu">Museu</option>
+                <option value="Restaurante">Restaurante</option>
+                <option value="Hotel">Hotel</option>
+                <option value="Praia">Praia</option>
+                <option value="Monumento">Monumento</option>
+                <option value="Igreja">Igreja</option>
+                <option value="Teatro">Teatro</option>
+                <option value="Outro">Outro</option>
+            </select>
+            <select id="filtroEstado" onchange="filtrarPontos()">
+                <option value="">Todos os estados</option>
+                <option value="AC">Acre</option>
+                <option value="AL">Alagoas</option>
+                <option value="AP">Amapá</option>
+                <option value="AM">Amazonas</option>
+                <option value="BA">Bahia</option>
+                <option value="CE">Ceará</option>
+                <option value="DF">Distrito Federal</option>
+                <option value="ES">Espírito Santo</option>
+                <option value="GO">Goiás</option>
+                <option value="MA">Maranhão</option>
+                <option value="MT">Mato Grosso</option>
+                <option value="MS">Mato Grosso do Sul</option>
+                <option value="MG">Minas Gerais</option>
+                <option value="PA">Pará</option>
+                <option value="PB">Paraíba</option>
+                <option value="PR">Paraná</option>
+                <option value="PE">Pernambuco</option>
+                <option value="PI">Piauí</option>
+                <option value="RJ">Rio de Janeiro</option>
+                <option value="RN">Rio Grande do Norte</option>
+                <option value="RS">Rio Grande do Sul</option>
+                <option value="RO">Rondônia</option>
+                <option value="RR">Roraima</option>
+                <option value="SC">Santa Catarina</option>
+                <option value="SP">São Paulo</option>
+                <option value="SE">Sergipe</option>
+                <option value="TO">Tocantins</option>
+            </select>
+            <div class="toggle-visualizacao">
+                <button type="button" id="btnVisualizacaoGeral" class="btn-toggle-view active" onclick="mudarVisualizacao('geral')">🌐 Geral</button>
+                <button type="button" id="btnVisualizacaoMapa" class="btn-toggle-view" onclick="mudarVisualizacao('mapa')">🗺 Mapa</button>
+                <button type="button" id="btnVisualizacaoLista" class="btn-toggle-view" onclick="mudarVisualizacao('lista')">☰ Lista</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="secao-mapa" id="secaoMapa">
+        <div class="container-pontos">
+            <p id="avisoMapaVazio" class="aviso-vazio" style="display:none;">Nenhum ponto com localização encontrada para este filtro.</p>
+            <div id="mapaDestinos"></div>
+        </div>
+    </section>
+
+    <section class="lista-pontos" id="secaoLista">
+        <div class="container-pontos">
+            <div id="secaoResultadosBusca" class="secao-resultados-busca" style="display:none;">
+                <h2 class="titulo-secao-destinos" id="tituloResultadosBusca">Resultados da busca</h2>
+                <div id="gridResultados" class="grid-pontos"></div>
+            </div>
+
+            <h2 class="titulo-secao-destinos" id="tituloOutrosDestinos">Destinos disponíveis</h2>
+            <div id="gridPontos" class="grid-pontos">
+                <p class="loading">Carregando...</p>
+            </div>
+            <div id="paginacao" class="paginacao"></div>
+        </div>
+    </section>
+
+    <section class="cta-fornecedor">
+        <h2>Conhece um lugar incrível?</h2>
+        <p>Cadastre pontos turisticos e alcance milhares de viajantes</p>
+        {% if user.is_authenticated %}
+            <button class="cta-btn" onclick="abrirModal('modalCriarPonto')">Cadastrar Pontos Turisticos</button>
+        {% else %}
+            <a href="{% url 'cadastro' %}" class="cta-btn">Cadastrar Pontos Turisticos</a>
+        {% endif %}
+    </section>
+
+    {% include "partials/fab_modals.html" with sufixo="Destinos" %}
+{% endblock %}
+
+{% block footer_content %}
+    <div class="footer-section">
+        <h4>Ta no Mapa</h4>
+        <ul>
+            <li><a href="#">Sobre nos</a></li>
+            <li><a href="#">Nossa equipe</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block js %}
+    {% include "partials/fab_scripts.html" with sufixo="Destinos" %}
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{% static 'js/destinos.js' %}"></script>
+    <script src="{% static 'js/destinos-mapa.js' %}"></script>
+{% endblock %}

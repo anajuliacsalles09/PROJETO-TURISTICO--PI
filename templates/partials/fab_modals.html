@@ -1,0 +1,122 @@
+{% comment %}
+Uso: {% include "partials/fab_modals.html" with sufixo="Destinos" %}
+"sufixo" deve ser único por página (Index/Destinos) para não colidir
+os IDs quando mais de uma dessas seções existir no mesmo documento.
+{% endcomment %}
+{% if user.is_authenticated %}
+<div class="fab-container">
+    <button class="fab-button" onclick="toggleFabMenu()">+</button>
+    <div class="fab-menu" id="fabMenu">
+        <button class="fab-option" onclick="abrirModal('modalCriarPonto')">
+            Criar Local
+        </button>
+    </div>
+</div>
+
+<div id="modalCriarPonto" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>Cadastrar Novo Local</h2>
+            <span class="modal-close" onclick="fecharModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="formPonto{{ sufixo }}">
+                <div class="form-group">
+                    <label for="nomePonto{{ sufixo }}">Nome do Local *</label>
+                    <input type="text" id="nomePonto{{ sufixo }}" name="nome" required placeholder="Ex: Museu de Arte Moderna">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tipoPonto{{ sufixo }}">Tipo *</label>
+                        <select id="tipoPonto{{ sufixo }}" name="tipo" required>
+                            <option value="">Selecione</option>
+                            <option value="Museu">Museu</option>
+                            <option value="Parque">Parque</option>
+                            <option value="Monumento">Monumento</option>
+                            <option value="Igreja">Igreja</option>
+                            <option value="Restaurante">Restaurante</option>
+                            <option value="Hotel">Hotel</option>
+                            <option value="Praia">Praia</option>
+                            <option value="Teatro">Teatro</option>
+                            <option value="Centro Cultural">Centro Cultural</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="localidadePonto{{ sufixo }}">Cidade/Estado *</label>
+                        <input type="text" id="localidadePonto{{ sufixo }}" name="localidade" required placeholder="Ex: São Paulo, SP">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="enderecoPonto{{ sufixo }}">Endereço Completo *</label>
+                    <input type="text" id="enderecoPonto{{ sufixo }}" name="endereco" required placeholder="Ex: Av. Paulista, 1578">
+                </div>
+
+                <div class="form-group">
+                    <label for="bioPonto{{ sufixo }}">Descrição</label>
+                    <textarea id="bioPonto{{ sufixo }}" name="bio" rows="3" placeholder="Descreva o local (opcional)..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="faixaPrecoPonto{{ sufixo }}">Faixa de preço *</label>
+                    <select id="faixaPrecoPonto{{ sufixo }}" name="faixaPreco" required>
+                        <option value="Gratuito">Gratuito</option>
+                        <option value="Baixo">Baixo</option>
+                        <option value="Médio" selected>Médio</option>
+                        <option value="Elevado">Elevado</option>
+                    </select>
+                    <small class="form-hint">Preço que os visitantes costumam pagar neste local.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Sua avaliação para este local (opcional)</label>
+                    <div class="rating-input">
+                        <input type="radio" name="nota" value="5" id="notaPonto5{{ sufixo }}">
+                        <label for="notaPonto5{{ sufixo }}">★</label>
+                        <input type="radio" name="nota" value="4" id="notaPonto4{{ sufixo }}">
+                        <label for="notaPonto4{{ sufixo }}">★</label>
+                        <input type="radio" name="nota" value="3" id="notaPonto3{{ sufixo }}">
+                        <label for="notaPonto3{{ sufixo }}">★</label>
+                        <input type="radio" name="nota" value="2" id="notaPonto2{{ sufixo }}">
+                        <label for="notaPonto2{{ sufixo }}">★</label>
+                        <input type="radio" name="nota" value="1" id="notaPonto1{{ sufixo }}">
+                        <label for="notaPonto1{{ sufixo }}">★</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Fotos do Local (até 4)</label>
+                    <small class="form-hint">Adicione de 1 a 4 fotos, uma em cada campo abaixo. A Foto 1 será a capa do local. Todas aparecerão em carrossel na página do local.</small>
+                    <div class="fotos-slots-grid">
+                        <div class="foto-slot">
+                            <label for="fotoSlot1{{ sufixo }}">Foto 1 <span class="foto-slot-capa-tag">Capa</span></label>
+                            <input type="file" id="fotoSlot1{{ sufixo }}" class="foto-slot-input" accept="image/*" data-indice="0">
+                            <div class="foto-slot-preview" id="fotoSlotPreview1{{ sufixo }}"></div>
+                        </div>
+                        <div class="foto-slot">
+                            <label for="fotoSlot2{{ sufixo }}">Foto 2</label>
+                            <input type="file" id="fotoSlot2{{ sufixo }}" class="foto-slot-input" accept="image/*" data-indice="1">
+                            <div class="foto-slot-preview" id="fotoSlotPreview2{{ sufixo }}"></div>
+                        </div>
+                        <div class="foto-slot">
+                            <label for="fotoSlot3{{ sufixo }}">Foto 3</label>
+                            <input type="file" id="fotoSlot3{{ sufixo }}" class="foto-slot-input" accept="image/*" data-indice="2">
+                            <div class="foto-slot-preview" id="fotoSlotPreview3{{ sufixo }}"></div>
+                        </div>
+                        <div class="foto-slot">
+                            <label for="fotoSlot4{{ sufixo }}">Foto 4</label>
+                            <input type="file" id="fotoSlot4{{ sufixo }}" class="foto-slot-input" accept="image/*" data-indice="3">
+                            <div class="foto-slot-preview" id="fotoSlotPreview4{{ sufixo }}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-salvar">Cadastrar Local</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}

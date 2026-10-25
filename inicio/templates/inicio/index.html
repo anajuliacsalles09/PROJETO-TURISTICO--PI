@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Ta no Mapa - Descubra o Brasil{% endblock %}
+
+{% block page_slug %}index{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style-principal.css' %}?v=2.0">
+<link rel="stylesheet" href="{% static 'css/style-modal.css' %}?v=2.0">
+{% endblock %}
+
+{% block content %}
+    <section class="hero">
+    <h1>Descubra o que<br> "Ta no Mapa"</h1>
+    <p>Encontre as melhores opções de destinos incríveis pelo Brasil</p>
+    <form class="search-box"
+          id="formBuscaHero"
+          action="{% url 'destinos' %}"
+          method="get"
+          data-logado="{{ user.is_authenticated|yesno:'1,0' }}"
+          data-url-cadastro="{% url 'cadastro' %}">
+        <input type="text"
+               class="search-input"
+               id="inputBuscaHero"
+               name="busca"
+               placeholder="Para onde você quer ir no Brasil?">
+        <button type="submit" class="search-btn">Buscar</button>
+    </form>
+</section>
+
+    <section class="features">
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.27 6.96 12 12.01l8.73-5.05"></path><path d="M12 22.08V12"></path></svg></div>
+            <h3>Destinos Exclusivos</h3>
+            <p>Mais de 300 destinos pelo Brasil</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
+            <h3>Qualidade Premium</h3>
+            <p>Experiências de alta qualidade</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg></div>
+            <h3>Melhor Custo-Benefício</h3>
+            <p>Garantia dos melhores preços para sua viagem</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 2.5"></path><path d="M9 2h6"></path></svg></div>
+            <h3>Agilidade e Facilidade</h3>
+            <p>Buscas em menos de 5 minutos</p>
+        </div>
+    </section>
+
+<section class="destinations">
+    <h2>Destinos Populares</h2>
+    <p class="destinations-subtitle">Os 5 pontos turísticos mais bem avaliados</p>
+    <div class="carousel-container">
+        <button class="carousel-btn carousel-btn-prev" onclick="moverCarousel(-1)">
+            &#10094;
+        </button>
+        <div class="carousel-track" id="carouselTop5">
+            <p class="loading-carousel">Carregando...</p>
+        </div>
+        <button class="carousel-btn carousel-btn-next" onclick="moverCarousel(1)">
+            &#10095;
+        </button>
+    </div>
+</section>
+
+    <section class="cta">
+        <h2>Pronto para sua próxima aventura?</h2>
+        <p>Comece a planejar sua viagem dos sonhos agora mesmo</p>
+        {% if user.is_authenticated %}
+            <a href="{% url 'perfil' %}" class="cta-btn">Ir para Meu Perfil</a>
+        {% else %}
+            <a href="{% url 'cadastro' %}" class="cta-btn">Começar</a>
+        {% endif %}
+    </section>
+
+    {% include "partials/fab_modals.html" with sufixo="Index" %}
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'js/index.js' %}"></script>
+
+    {% include "partials/fab_scripts.html" with sufixo="Index" %}
+{% endblock %}

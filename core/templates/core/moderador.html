@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Painel de Moderação - Ta no Mapa{% endblock %}
+
+{% block page_slug %}moderador{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style-principal.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-perfil.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-modal.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Painel de Moderação</h1>
+        <p>Revise as solicitações de novos locais enviadas pelos turistas e gerencie usuários e pontos turísticos.</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card stat-usuarios">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+                <div class="stat-label">Usuários cadastrados</div>
+                <div class="stat-value" id="totalUsuarios">{{ total_usuarios }}</div>
+            </div>
+        </div>
+        <div class="stat-card stat-pontos">
+            <div class="stat-icon">📍</div>
+            <div class="stat-info">
+                <div class="stat-label">Locais cadastrados</div>
+                <div class="stat-value" id="totalPontos">{{ total_pontos }}</div>
+            </div>
+        </div>
+        <div class="stat-card stat-pendentes">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+                <div class="stat-label">Aguardando aprovação</div>
+                <div class="stat-value" id="totalPendentes">{{ total_pendentes }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-tabs">
+        <button type="button" class="tab-btn active" onclick="mostrarAbaModeracao('pendentes', this)">⏳ Solicitações pendentes</button>
+        <button type="button" class="tab-btn" onclick="mostrarAbaModeracao('usuarios', this)">👥 Usuários</button>
+        <button type="button" class="tab-btn" onclick="mostrarAbaModeracao('pontos', this)">📍 Todos os pontos</button>
+    </div>
+
+    <div class="admin-content">
+
+        <div class="aba-content active" id="aba-pendentes">
+            <div class="content-header">
+                <p>Locais enviados pelos turistas que ainda não foram avaliados. Confira as informações e fotos antes de aprovar ou rejeitar.</p>
+            </div>
+            <div id="listaPendentes" class="lista-itens">
+                <p class="loading">Carregando...</p>
+            </div>
+        </div>
+
+        <div class="aba-content" id="aba-usuarios">
+            <div class="content-header">
+                <input type="text" id="searchUsuarios" class="search-input" placeholder="Buscar por nome ou e-mail..." oninput="filtrarTabelaModeracao('usuarios')">
+            </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>E-mail</th>
+                            <th>Função</th>
+                            <th>Cadastro</th>
+                            <th>Locais</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaUsuarios">
+                        <tr><td colspan="6" class="loading">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="aba-content" id="aba-pontos">
+            <div class="content-header">
+                <input type="text" id="searchPontos" class="search-input" placeholder="Buscar por nome ou cidade..." oninput="filtrarTabelaModeracao('pontos')">
+            </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Local</th>
+                            <th>Tipo</th>
+                            <th>Localidade</th>
+                            <th>Autor</th>
+                            <th>Avaliação</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaPontos">
+                        <tr><td colspan="7" class="loading">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="modalRejeitarLocal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Rejeitar local</h2>
+            <span class="modal-close" onclick="fecharModalRejeitar()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="formRejeitarLocal">
+                <div class="form-group">
+                    <label for="motivoRejeicao">Motivo da rejeição</label>
+                    <textarea id="motivoRejeicao" name="motivo" rows="4" placeholder="Explique por que este local está sendo rejeitado (o turista poderá ver esse motivo)..." required></textarea>
+                </div>
+                <button type="submit" class="btn-salvar" style="background:#f44336;">Confirmar rejeição</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'js/admin.js' %}"></script>
+{% endblock %}

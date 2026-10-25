@@ -1,0 +1,231 @@
+{% comment %}
+Uso: {% include "partials/fab_scripts.html" with sufixo="Destinos" %}
+{% endcomment %}
+<script>
+// ---------------------------------------------------------------------
+// Estilo + aviso (toast) deste partial. É injetado uma única vez e usa
+// prefixos próprios (fab-*) para não colidir com o resto do site.
+// ---------------------------------------------------------------------
+(function() {
+    if (document.getElementById('fab-estilos')) return;
+    const css = `
+        .fab-toast-area { position: fixed; right: 20px; bottom: 20px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .fab-toast { display: flex; align-items: center; gap: 12px; min-width: 260px; max-width: 380px;
+            padding: 14px 18px; border-radius: 14px; color: #fff; background: #0f2230;
+            box-shadow: 0 18px 44px rgba(15, 34, 48, .28); font: 500 .92rem/1.4 'Inter', system-ui, sans-serif;
+            pointer-events: auto; cursor: pointer; animation: fab-toast-in .4s cubic-bezier(.22,.8,.3,1); }
+        .fab-toast::before { content: ''; flex-shrink: 0; width: 10px; height: 10px; border-radius: 50%; background: #4ade80; }
+        .fab-toast.erro::before { background: #fb7185; }
+        .fab-toast.aviso::before { background: #fbbf24; }
+        .fab-toast.saindo { opacity: 0; transform: translateX(30px); transition: all .3s ease; }
+        @keyframes fab-toast-in { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+
+        form .preview-foto-item { position: relative; width: 112px; height: 112px; margin-top: 8px;
+            border-radius: 14px; overflow: hidden; box-shadow: 0 4px 14px rgba(15, 34, 48, .16);
+            animation: fab-toast-in .3s ease; }
+        form .preview-foto-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        form .preview-foto-capa-tag { position: absolute; left: 6px; bottom: 6px; padding: 3px 9px;
+            border-radius: 999px; font: 700 .68rem/1 'Inter', system-ui, sans-serif; letter-spacing: .04em;
+            color: #fff; background: linear-gradient(135deg, #1F5673, #22b8a7); }
+        form .preview-foto-remover { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px;
+            padding: 0; border: none; border-radius: 50%; cursor: pointer; font-size: 1.05rem; line-height: 1;
+            color: #fff; background: rgba(15, 34, 48, .7); transition: all .2s; }
+        form .preview-foto-remover:hover { background: #e11d48; transform: scale(1.1); }
+        form button[type="submit"]:disabled { opacity: .7; cursor: wait; }
+
+        @media (max-width: 600px) { .fab-toast-area { left: 14px; right: 14px; bottom: 14px; }
+            .fab-toast { max-width: none; } }
+    `;
+    const estilo = document.createElement('style');
+    estilo.id = 'fab-estilos';
+    estilo.textContent = css;
+    document.head.appendChild(estilo);
+})();
+
+window.fabToast = function(mensagem, tipo) {
+    let area = document.querySelector('.fab-toast-area');
+    if (!area) {
+        area = document.createElement('div');
+        area.className = 'fab-toast-area';
+        document.body.appendChild(area);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'fab-toast ' + (tipo || 'sucesso');
+    toast.setAttribute('role', 'status');
+    toast.textContent = mensagem;
+    area.appendChild(toast);
+
+    const remover = function() {
+        toast.classList.add('saindo');
+        setTimeout(function() { toast.remove(); }, 300);
+    };
+    setTimeout(remover, 4000);
+    toast.addEventListener('click', remover);
+};
+</script>
+<script>
+
+window.abrirModal = function(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add('show');
+        modal.style.display = 'block';
+    }
+}
+
+window.fecharModal = function() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    });
+}
+
+window.toggleFabMenu = function() {
+    const menu = document.getElementById('fabMenu');
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+document.addEventListener('click', function(event) {
+    const fabContainer = document.querySelector('.fab-container');
+    const fabMenu = document.getElementById('fabMenu');
+
+    if (fabContainer && !fabContainer.contains(event.target) && fabMenu) {
+        fabMenu.classList.remove('show');
+    }
+});
+
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('modal')) {
+        fecharModal();
+    }
+});
+
+// O js/local.js original só reconhece o formulário sem sufixo (#formPonto),
+// então não funciona dentro dos modais reutilizados (#formPontoIndex,
+// #formPontoDestinos). Este handler cobre o sufixo desta
+// página especificamente.
+(function() {
+    const form = document.getElementById('formPonto{{ sufixo }}');
+    if (!form) return;
+
+    // Um campo de arquivo por foto (Foto 1 a Foto 4), cada um com sua
+    // própria prévia. O campo "Foto 1" é sempre tratado como a capa.
+    const inputsFotos = Array.from(form.querySelectorAll('.foto-slot-input'));
+
+    function renderPreviewSlot(input) {
+        const preview = input.nextElementSibling;
+        preview.innerHTML = '';
+
+        const arquivo = input.files[0];
+        if (!arquivo) return;
+
+        const indice = parseInt(input.dataset.indice, 10);
+        const leitor = new FileReader();
+        leitor.onload = function(e) {
+            const item = document.createElement('div');
+            item.className = 'preview-foto-item';
+            item.innerHTML = `
+                <img src="${e.target.result}" alt="Prévia da foto">
+                ${indice === 0 ? '<span class="preview-foto-capa-tag">Capa</span>' : ''}
+                <button type="button" class="preview-foto-remover" title="Remover foto">×</button>
+            `;
+            item.querySelector('.preview-foto-remover').addEventListener('click', function() {
+                input.value = '';
+                preview.innerHTML = '';
+            });
+            preview.appendChild(item);
+        };
+        leitor.readAsDataURL(arquivo);
+    }
+
+    inputsFotos.forEach((input) => {
+        input.addEventListener('change', function() {
+            renderPreviewSlot(input);
+        });
+    });
+
+    const botaoEnviar = form.querySelector('button[type="submit"]');
+    let enviando = false;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (enviando) return;
+
+        const nome = document.getElementById('nomePonto{{ sufixo }}').value;
+        const tipo = document.getElementById('tipoPonto{{ sufixo }}').value;
+        const localidade = document.getElementById('localidadePonto{{ sufixo }}').value;
+        const endereco = document.getElementById('enderecoPonto{{ sufixo }}').value;
+        const bio = document.getElementById('bioPonto{{ sufixo }}').value;
+        const faixaPrecoEl = document.getElementById('faixaPrecoPonto{{ sufixo }}');
+        const faixaPreco = faixaPrecoEl ? faixaPrecoEl.value : 'Médio';
+
+        if (!nome || !tipo || !localidade || !endereco) {
+            fabToast('Por favor, preencha todos os campos obrigatórios', 'aviso');
+            return;
+        }
+
+        // Trava o botão: o cadastro pode demorar alguns segundos (busca da
+        // localização no mapa) e um segundo clique criaria o local em dobro.
+        enviando = true;
+        const textoBotao = botaoEnviar ? botaoEnviar.textContent : '';
+        if (botaoEnviar) {
+            botaoEnviar.disabled = true;
+            botaoEnviar.textContent = 'Enviando...';
+        }
+
+        const formData = new FormData();
+        formData.append('action', 'criar');
+        formData.append('nome', nome);
+        formData.append('tipo', tipo);
+        formData.append('localidade', localidade);
+        formData.append('endereco', endereco);
+        formData.append('bio', bio);
+        formData.append('faixaPreco', faixaPreco);
+
+        const notaEscolhida = form.querySelector('input[name="nota"]:checked');
+        if (notaEscolhida) formData.append('nota', notaEscolhida.value);
+
+        inputsFotos.forEach((input) => {
+            const arquivo = input.files[0];
+            if (arquivo) formData.append('fotos', arquivo);
+        });
+
+        try {
+            const response = await fetch('/api/local_handler/', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                fabToast(result.message || 'Local cadastrado com sucesso!');
+                fecharModal();
+                form.reset();
+                inputsFotos.forEach((input) => {
+                    input.nextElementSibling.innerHTML = '';
+                });
+                if (typeof window.aoLocalCriado === 'function') {
+                    window.aoLocalCriado();
+                } else {
+                    // pequeno intervalo para dar tempo de ler o aviso
+                    setTimeout(function() { window.location.reload(); }, 1200);
+                }
+            } else {
+                fabToast('Erro: ' + result.message, 'erro');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            fabToast('Erro ao cadastrar local. Tente novamente.', 'erro');
+        } finally {
+            enviando = false;
+            if (botaoEnviar) {
+                botaoEnviar.disabled = false;
+                botaoEnviar.textContent = textoBotao;
+            }
+        }
+    });
+})();
+</script>

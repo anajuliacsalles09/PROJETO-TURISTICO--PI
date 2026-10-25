@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Meu Perfil - Ta no Mapa{% endblock %}
+
+{% block page_slug %}perfil{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style-principal.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-perfil.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-modal.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="perfil-header-section">
+    <div class="perfil-capa" id="perfilCapa"{% if user.foto_capa %} style="background-image: url('{{ user.foto_capa.url }}');"{% endif %}>
+        <label for="inputFotoCapa" class="btn-capa-upload" title="Escolher uma foto diferente da sua foto de perfil para usar de fundo aqui">
+            {% if user.foto_capa %}Trocar foto{% else %}Adicionar foto{% endif %}
+        </label>
+        <input type="file" id="inputFotoCapa" accept="image/*" hidden>
+    </div>
+    <div class="perfil-info-container">
+        <div class="perfil-avatar-wrapper">
+            {% if user.foto_perfil %}
+                <img src="{{ user.foto_perfil.url }}" alt="{{ user.nome }}" class="perfil-avatar-img">
+            {% else %}
+                <div class="perfil-avatar-img" style="display:flex; align-items:center; justify-content:center; font-size:3rem;">👤</div>
+            {% endif %}
+        </div>
+        <div class="perfil-dados">
+            <div class="perfil-nome-linha">
+                <h1>{{ user.nome }}</h1>
+                <button type="button" class="btn-editar-perfil" onclick="abrirModalEditarPerfil()">Editar Perfil</button>
+            </div>
+            <div class="perfil-stats">
+                <span>{{ total_locais }} {% if total_locais == 1 %}local{% else %}locais{% endif %}</span>
+                <span>{{ total_avaliacoes_turista }} {% if total_avaliacoes_turista == 1 %}avaliação{% else %}avaliações{% endif %}</span>
+            </div>
+            {% if user.bio %}<p class="perfil-bio">{{ user.bio }}</p>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container-perfil">
+    <section class="perfil-lista">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:12px;">
+            <h2>Meus Locais</h2>
+            <button type="button" class="btn-salvar" style="width:auto;" onclick="abrirModal('modalCriarPonto')">+ Cadastrar Local</button>
+        </div>
+
+        {% if meus_locais %}
+        <div class="lista-itens" id="listaLocais">
+            {% for local in meus_locais %}
+            <div class="item-lista" data-local-id="{{ local.id }}">
+                <div class="item-imagem" onclick="window.location.href='{% url 'visualizar_ponto' %}?id={{ local.id }}'" style="background-image: url('{% if local.foto_capa %}{{ local.foto_capa.imagem.url }}{% else %}{% static "img/default.jpeg" %}{% endif %}');">
+                    <div class="item-badge">
+                        {% if local.total_avaliacoes %}★ {{ local.avaliacao_media|floatformat:1 }}{% else %}Novo{% endif %}
+                    </div>
+                </div>
+                <div class="item-info">
+                    <h3 class="item-nome">
+                        {{ local.nome }}
+                        {% if local.status == 'pendente' %}
+                            <span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:.75rem; font-weight:600; background:rgba(255,152,0,.12); color:#ff9800;">Pendente</span>
+                        {% elif local.status == 'rejeitado' %}
+                            <span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:.75rem; font-weight:600; background:rgba(244,67,54,.12); color:#f44336;" title="{{ local.motivo_rejeicao }}">Rejeitado</span>
+                        {% endif %}
+                    </h3>
+                    <p class="card-location">{{ local.localidade }}</p>
+                    <p class="card-bio">{{ local.bio|default:"Sem descrição disponível"|truncatechars:100 }}</p>
+                    <div class="card-footer">
+                        <span>{{ local.get_faixa_preco_display }}</span>
+                        <span class="item-avaliacoes">{{ local.total_avaliacoes|default:0 }} avaliações</span>
+                    </div>
+                </div>
+                <div class="item-acoes">
+                    <button type="button" class="btn-item" onclick="window.location.href='{% url 'visualizar_ponto' %}?id={{ local.id }}'">Ver</button>
+                    <button type="button" class="btn-item" style="background:#ffc107; color:#1a1a1a;" onclick="abrirEdicaoLocal({{ local.id }})">Editar</button>
+                    <button type="button" class="btn-item" onclick="excluirLocalCard({{ local.id }})">Excluir</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="aviso-lista">Você ainda não cadastrou nenhum local. Use o botão acima para cadastrar o primeiro!</p>
+        {% endif %}
+    </section>
+    <section class="perfil-lista">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:12px;">
+            <h2>★ Minhas Avaliações</h2>
+            <a href="{% url 'destinos' %}" class="btn-salvar" style="width:auto; text-decoration:none; display:inline-block;">Explorar destinos no Brasil</a>
+        </div>
+
+        {% if minhas_avaliacoes %}
+        <div class="lista-itens">
+            {% for avaliacao in minhas_avaliacoes %}
+            <div class="item-lista" {% if avaliacao.ponto_turistico %}onclick="window.location.href='{% url 'visualizar_ponto' %}?id={{ avaliacao.ponto_turistico.id }}'"{% endif %}>
+                <div class="item-imagem" style="background-image: url('{% if avaliacao.ponto_turistico.foto_capa %}{{ avaliacao.ponto_turistico.foto_capa.imagem.url }}{% else %}{% static "img/default.jpeg" %}{% endif %}');">
+                    <div class="item-badge">★ {{ avaliacao.nota|floatformat:1 }}</div>
+                </div>
+                <div class="item-info">
+                    <h3 class="item-nome">{{ avaliacao.ponto_turistico.nome|default:"Local removido" }}</h3>
+                    <p class="card-location">{{ avaliacao.ponto_turistico.localidade|default:"" }}</p>
+                    <p class="card-bio">{{ avaliacao.descricao|default:"Você não deixou um comentário nesta avaliação."|truncatechars:100 }}</p>
+                    <div class="card-footer">
+                        <span>Avaliado em {{ avaliacao.data_avaliacao|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="aviso-lista">
+            Você ainda não avaliou nenhum destino. Explore os pontos turísticos pelo Brasil e conte sua experiência!<br><br>
+            <a href="{% url 'destinos' %}" class="btn-salvar" style="width:auto; display:inline-block; text-decoration:none;">Explorar destinos</a>
+        </p>
+        {% endif %}
+    </section>
+</div>
+
+{% include "partials/fab_modals.html" with sufixo="Perfil" %}
+{% include "partials/editar_local_modal.html" %}
+{% include "partials/editar_perfil_modal.html" %}
+{% endblock %}
+
+{% block js %}
+{% include "partials/fab_scripts.html" with sufixo="Perfil" %}
+
+<script>
+(function() {
+    const input = document.getElementById('inputFotoCapa');
+    const capa = document.getElementById('perfilCapa');
+    if (!input || !capa) return;
+
+    input.addEventListener('change', async function() {
+        const arquivo = input.files && input.files[0];
+        if (!arquivo) return;
+
+        capa.style.opacity = '0.6';
+
+        const formData = new FormData();
+        formData.append('action', 'editar_capa');
+        formData.append('fotoCapa', arquivo);
+
+        try {
+            const response = await fetch('/api/perfil_handler/', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                capa.style.backgroundImage = `url('${result.foto_capa}')`;
+            } else {
+                alert('Erro: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Erro ao enviar foto de capa:', error);
+            alert('Erro ao enviar a foto. Tente novamente.');
+        } finally {
+            capa.style.opacity = '1';
+            input.value = '';
+        }
+    });
+})();
+</script>
+{% endblock %}

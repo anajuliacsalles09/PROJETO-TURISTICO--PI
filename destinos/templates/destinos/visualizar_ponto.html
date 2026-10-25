@@ -1,0 +1,564 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}{{ ponto.nome }} - Ta no Mapa{% endblock %}
+
+{% block page_slug %}visualizar-ponto{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style-principal.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-visualizar-ponto.css' %}">
+<link rel="stylesheet" href="{% static 'css/style-modal.css' %}">
+{% endblock %}
+
+{% block content %}
+    {% with fotos=ponto.fotos.all %}
+    <div class="ponto-hero">
+        <div class="ponto-hero-slides" id="heroCarouselSlides" onclick="abrirLightboxFotos(heroSlideAtual)" role="button" tabindex="0" aria-label="Ver foto em tela cheia" title="Clique para ver a foto inteira">
+            {% for foto in fotos %}
+                <div class="hero-slide {% if forloop.first %}active{% endif %}" style="background-image: url('{{ foto.imagem.url }}');"></div>
+            {% empty %}
+                <div class="hero-slide active" style="background-image: url('{% static 'img/default.jpeg' %}');"></div>
+            {% endfor %}
+        </div>
+        <div class="ponto-hero-overlay"></div>
+        <div class="ponto-hero-content">
+            <h1>{{ ponto.nome }}</h1>
+            <div class="ponto-location">
+                <span></span>
+                <span>{{ ponto.localidade }}</span>
+            </div>
+            {% if ponto.total_avaliacoes %}
+            <div class="ponto-rating">
+                <span class="rating-stars">★ {{ ponto.avaliacao_media|floatformat:1 }}</span>
+                <span class="rating-count">({{ ponto.total_avaliacoes }} avaliações)</span>
+            </div>
+            {% endif %}
+        </div>
+        {% if is_autor %}
+        <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px; z-index:5;">
+            <button type="button" class="btn-avaliar" onclick="abrirEdicaoLocal({{ ponto.id }})">Editar Local</button>
+            <button type="button" class="btn-avaliar" style="background:#dc3545;" onclick="excluirLocalCard({{ ponto.id }})">Excluir Local</button>
+        </div>
+        {% endif %}
+        <button type="button" class="hero-ampliar-btn" onclick="abrirLightboxFotos(heroSlideAtual)" title="Ver foto em tela cheia">Ampliar</button>
+        {% if fotos|length > 1 %}
+        <button type="button" class="hero-carousel-nav hero-carousel-prev" onclick="moverHeroCarousel(-1)" aria-label="Foto anterior">‹</button>
+        <button type="button" class="hero-carousel-nav hero-carousel-next" onclick="moverHeroCarousel(1)" aria-label="Próxima foto">›</button>
+        <div class="hero-carousel-contador">{{ fotos|length }} fotos</div>
+        <div class="hero-carousel-dots">
+            {% for foto in fotos %}
+                <span class="hero-dot {% if forloop.first %}active{% endif %}" onclick="irParaHeroSlide({{ forloop.counter0 }})"></span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endwith %}
+
+    <div id="lightboxFotos" class="lightbox-overlay" onclick="if (event.target === this) fecharLightboxFotos();">
+        <button type="button" class="lightbox-close" onclick="fecharLightboxFotos()" aria-label="Fechar">×</button>
+        {% if fotos|length > 1 %}
+        <button type="button" class="lightbox-nav lightbox-prev" onclick="moverLightboxFotos(-1)" aria-label="Foto anterior">‹</button>
+        <button type="button" class="lightbox-nav lightbox-next" onclick="moverLightboxFotos(1)" aria-label="Próxima foto">›</button>
+        {% endif %}
+        <img id="lightboxImg" class="lightbox-img" src="" alt="Foto do local em tela cheia">
+        <div class="lightbox-contador" id="lightboxContador"></div>
+    </div>
+
+    {% if is_autor and ponto.status != 'aprovado' %}
+    <div class="container-visualizar" style="padding-top:20px; padding-bottom:0;">
+        {% if ponto.status == 'pendente' %}
+        <div class="aviso-vazio" style="background:#fff8e1; border:1px solid #ffc107; border-radius:8px; padding:16px; margin-bottom:0;">
+            ⏳ Este local está <strong>pendente de aprovação</strong>. Ele só ficará visível para outros usuários depois que um moderador revisar as informações.
+        </div>
+        {% elif ponto.status == 'rejeitado' %}
+        <div class="aviso-vazio" style="background:#fdecea; border:1px solid #f44336; border-radius:8px; padding:16px; margin-bottom:0;">
+            ❌ Este local foi <strong>rejeitado</strong> por um moderador{% if ponto.motivo_rejeicao %}: "{{ ponto.motivo_rejeicao }}"{% endif %}. Edite as informações e envie novamente para uma nova análise.
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="container-visualizar">
+        <div class="content-main">
+            <section class="ponto-info" id="secaoSobre">
+                <h2>Sobre</h2>
+                <p id="textoSobre">{{ ponto.bio|default:"Sem descrição disponível."|linebreaksbr }}</p>
+
+                {% if ponto.endereco %}
+                <div class="ponto-endereco">
+                    <h3>Endereço</h3>
+                    <p id="textoEndereco">{{ ponto.endereco }}</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="avaliacoes-section">
+                <div class="avaliacoes-header">
+                    <h2>Avaliações</h2>
+                    {% if user.is_authenticated %}
+                        <button class="btn-avaliar" onclick="abrirModalAvaliacao()">Avaliar Local</button>
+                    {% endif %}
+                </div>
+
+                <div id="listaAvaliacoes" class="lista-avaliacoes">
+                    <p class="loading">Carregando avaliações...</p>
+                </div>
+            </section>
+        </div>
+
+        <aside class="content-sidebar">
+            <div class="fornecedor-card">
+                <h3>Cadastrado por</h3>
+                <div class="fornecedor-info">
+                    {% if ponto.fornecedor.foto_perfil %}
+                        <img src="{{ ponto.fornecedor.foto_perfil.url }}" alt="{{ ponto.fornecedor.nome }}" class="fornecedor-avatar">
+                    {% else %}
+                        <div class="fornecedor-avatar">👤</div>
+                    {% endif %}
+                    <div class="fornecedor-dados">
+                        <p class="fornecedor-nome">{{ ponto.fornecedor.nome }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>Informações</h3>
+                <div class="info-item">
+                    <span class="info-label">Tipo:</span>
+                    <span class="info-value">{{ ponto.tipo }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Localidade:</span>
+                    <span class="info-value">{{ ponto.localidade }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Faixa de preço:</span>
+                    <span class="info-value">{{ ponto.get_faixa_preco_display }}</span>
+                </div>
+                {% if ponto.total_avaliacoes %}
+                <div class="info-item">
+                    <span class="info-label">Avaliação:</span>
+                    <span class="info-value">★ {{ ponto.avaliacao_media|floatformat:1 }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Avaliações:</span>
+                    <span class="info-value">{{ ponto.total_avaliacoes }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+
+    {% if user.is_authenticated %}
+    <div id="modalAvaliacao" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Avaliar Local</h2>
+                <button class="modal-close" onclick="fecharModal('modalAvaliacao')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="formAvaliacao">
+                    <input type="hidden" name="pontoId" value="{{ ponto.id }}">
+
+                    <div class="form-group">
+                        <label>Nota *</label>
+                        <div class="rating-input">
+                            <input type="radio" name="nota" value="5" id="nota5" required>
+                            <label for="nota5">★</label>
+                            <input type="radio" name="nota" value="4" id="nota4">
+                            <label for="nota4">★</label>
+                            <input type="radio" name="nota" value="3" id="nota3">
+                            <label for="nota3">★</label>
+                            <input type="radio" name="nota" value="2" id="nota2">
+                            <label for="nota2">★</label>
+                            <input type="radio" name="nota" value="1" id="nota1">
+                            <label for="nota1">★</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descricao">Comentário</label>
+                        <textarea id="descricao" name="descricao" rows="4" placeholder="Compartilhe sua experiência..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-salvar">Enviar Avaliação</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <div id="modalEditarAvaliacao" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Avaliação</h2>
+                <button class="modal-close" onclick="fecharModal('modalEditarAvaliacao')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarAvaliacao">
+                    <input type="hidden" name="id" id="editAvaliacaoId">
+
+                    <div class="form-group">
+                        <label>Nota *</label>
+                        <div class="rating-input">
+                            <input type="radio" name="nota" value="5" id="editNota5" required>
+                            <label for="editNota5">★</label>
+                            <input type="radio" name="nota" value="4" id="editNota4">
+                            <label for="editNota4">★</label>
+                            <input type="radio" name="nota" value="3" id="editNota3">
+                            <label for="editNota3">★</label>
+                            <input type="radio" name="nota" value="2" id="editNota2">
+                            <label for="editNota2">★</label>
+                            <input type="radio" name="nota" value="1" id="editNota1">
+                            <label for="editNota1">★</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editDescricao">Comentário</label>
+                        <textarea id="editDescricao" name="descricao" rows="4" placeholder="Compartilhe sua experiência..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-salvar">Salvar Alterações</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if is_autor %}
+        {% include "partials/editar_local_modal.html" %}
+    {% endif %}
+{% endblock %}
+
+{% block footer_content %}
+    <div class="footer-section">
+        <h4>Ta no Mapa</h4>
+        <ul>
+            <li><a href="#">Sobre nós</a></li>
+            <li><a href="#">Nossa equipe</a></li>
+        </ul>
+    </div>
+    <div class="footer-section">
+        <h4>Suporte</h4>
+        <ul>
+            <li><a href="#">Central de ajuda</a></li>
+            <li><a href="#">Contato</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block js %}
+<script>
+    const pontoId = {{ ponto.id }};
+    const isAutor = {% if is_autor %}true{% else %}false{% endif %};
+    const usuarioId = {% if user.is_authenticated %}{{ user.id }}{% else %}null{% endif %};
+
+    // --- Carrossel de fotos do hero (até 4 fotos do local) ---
+    const fotosPontoUrls = [
+        {% for foto in ponto.fotos.all %}"{{ foto.imagem.url|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+    ];
+    let heroSlideAtual = 0;
+    const heroTotalFotos = document.querySelectorAll('#heroCarouselSlides .hero-slide').length;
+
+    function irParaHeroSlide(indice) {
+        const slides = document.querySelectorAll('#heroCarouselSlides .hero-slide');
+        const dots = document.querySelectorAll('.hero-carousel-dots .hero-dot');
+        if (!slides.length) return;
+
+        heroSlideAtual = (indice + slides.length) % slides.length;
+
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === heroSlideAtual));
+        dots.forEach((dot, i) => dot.classList.toggle('active', i === heroSlideAtual));
+    }
+    window.irParaHeroSlide = irParaHeroSlide;
+
+    window.moverHeroCarousel = function(direcao) {
+        irParaHeroSlide(heroSlideAtual + direcao);
+    };
+
+    // --- Lightbox (visualizar a foto em tela cheia) ---
+    let lightboxIndice = 0;
+
+    function renderLightbox() {
+        if (!fotosPontoUrls.length) return;
+        document.getElementById('lightboxImg').src = fotosPontoUrls[lightboxIndice];
+        document.getElementById('lightboxContador').textContent = `${lightboxIndice + 1} / ${fotosPontoUrls.length}`;
+    }
+
+    window.abrirLightboxFotos = function(indiceInicial) {
+        if (!fotosPontoUrls.length) return;
+        lightboxIndice = ((indiceInicial || 0) + fotosPontoUrls.length) % fotosPontoUrls.length;
+        renderLightbox();
+        const overlay = document.getElementById('lightboxFotos');
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.fecharLightboxFotos = function() {
+        const overlay = document.getElementById('lightboxFotos');
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+    };
+
+    window.moverLightboxFotos = function(direcao) {
+        lightboxIndice = (lightboxIndice + direcao + fotosPontoUrls.length) % fotosPontoUrls.length;
+        renderLightbox();
+    };
+
+    document.addEventListener('keydown', (e) => {
+        const lightboxAberto = document.getElementById('lightboxFotos').classList.contains('show');
+        if (lightboxAberto) {
+            if (e.key === 'Escape') fecharLightboxFotos();
+            if (e.key === 'ArrowLeft') moverLightboxFotos(-1);
+            if (e.key === 'ArrowRight') moverLightboxFotos(1);
+            return;
+        }
+        if (heroTotalFotos > 1) {
+            if (e.key === 'ArrowLeft') moverHeroCarousel(-1);
+            if (e.key === 'ArrowRight') moverHeroCarousel(1);
+        }
+    });
+
+    {% if is_autor %}
+    // Após excluir este local, ele deixa de existir: volta para o perfil
+    // em vez de recarregar esta mesma página (que resultaria em 404).
+    window.aoLocalExcluido = function() {
+        window.location.href = "{% url 'perfil' %}";
+    };
+    {% endif %}
+
+    function fecharModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
+        }
+    }
+
+    function abrirModalAvaliacao() {
+        const modal = document.getElementById('modalAvaliacao');
+        if (modal) {
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+        }
+    }
+
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+            }
+        });
+    });
+
+    function formatarData(data) {
+        const d = new Date(data);
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Guarda os dados de cada avaliação carregada (por id) para preencher o
+    // modal de edição sem precisar embutir JSON em atributos HTML — evita
+    // quebrar o HTML quando o comentário contém aspas.
+    let avaliacoesCarregadas = {};
+
+    async function carregarAvaliacoes() {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'listar_avaliacoes');
+            formData.append('tipo', 'Ponto_Turistico');
+            formData.append('pontoId', pontoId);
+
+            const response = await fetch('/api/avaliacao_handler/', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            const container = document.getElementById('listaAvaliacoes');
+
+            if (result.success && result.avaliacoes && result.avaliacoes.length > 0) {
+                avaliacoesCarregadas = {};
+                result.avaliacoes.forEach(aval => { avaliacoesCarregadas[aval.Id] = aval; });
+
+                container.innerHTML = result.avaliacoes.map(aval => {
+                    const fotoUrl = aval.Foto_Perfil || '';
+                    const avatarHTML = fotoUrl
+                        ? `<img src="${fotoUrl}" alt="${aval.NomeUsuario}">`
+                        : '👤';
+
+                    const ehDoUsuario = usuarioId !== null && aval.Avaliador === usuarioId;
+                    const descricaoEscapada = aval.Descricao ? escapeHtml(aval.Descricao) : '';
+                    const acoesHTML = ehDoUsuario ? `
+                            <div class="avaliacao-acoes">
+                                <button type="button" class="btn-avaliacao-editar" data-id="${aval.Id}">Editar</button>
+                                <button type="button" class="btn-avaliacao-excluir" data-id="${aval.Id}">Excluir</button>
+                            </div>
+                        ` : '';
+
+                    return `
+                        <div class="avaliacao-card">
+                            <div class="avaliacao-header">
+                                <div class="avaliacao-usuario">
+                                    <div class="usuario-avatar">${avatarHTML}</div>
+                                    <div>
+                                        <p class="usuario-nome">${aval.NomeUsuario}</p>
+                                        <p class="avaliacao-data">${formatarData(aval.DataAvaliacao)}</p>
+                                    </div>
+                                </div>
+                                <div class="avaliacao-nota">${'★'.repeat(Math.round(aval.Nota))}</div>
+                            </div>
+                            ${aval.Descricao ? `<p class="avaliacao-texto">${descricaoEscapada}</p>` : ''}
+                            ${acoesHTML}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                avaliacoesCarregadas = {};
+                container.innerHTML = '<p class="aviso-vazio">Nenhuma avaliação ainda. Seja o primeiro a avaliar!</p>';
+            }
+        } catch (error) {
+            console.error('Erro ao carregar avaliações:', error);
+            document.getElementById('listaAvaliacoes').innerHTML = '<p class="erro">Erro ao carregar avaliações</p>';
+        }
+    }
+
+    // Delegação de eventos: os botões de editar/excluir avaliação são
+    // recriados a cada carregarAvaliacoes(), então o listener fica no
+    // container pai (que sempre existe) em vez de em cada botão.
+    document.getElementById('listaAvaliacoes').addEventListener('click', function(e) {
+        const btnEditar = e.target.closest('.btn-avaliacao-editar');
+        if (btnEditar) {
+            abrirEdicaoAvaliacao(parseInt(btnEditar.dataset.id, 10));
+            return;
+        }
+        const btnExcluir = e.target.closest('.btn-avaliacao-excluir');
+        if (btnExcluir) {
+            excluirAvaliacao(parseInt(btnExcluir.dataset.id, 10));
+        }
+    });
+
+    const formAvaliacao = document.getElementById('formAvaliacao');
+    if (formAvaliacao) {
+        formAvaliacao.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(formAvaliacao);
+            formData.append('action', 'criar_avaliacao');
+            formData.append('tipo', 'Ponto_Turistico');
+
+            try {
+                const response = await fetch('/api/avaliacao_handler/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Avaliação enviada com sucesso!');
+                    fecharModal('modalAvaliacao');
+                    formAvaliacao.reset();
+                    carregarAvaliacoes();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao enviar avaliação');
+            }
+        });
+    }
+
+    function abrirEdicaoAvaliacao(id) {
+        const aval = avaliacoesCarregadas[id];
+        if (!aval) {
+            alert('Não foi possível carregar os dados desta avaliação. Tente recarregar a página.');
+            return;
+        }
+
+        document.getElementById('editAvaliacaoId').value = aval.Id;
+        document.getElementById('editDescricao').value = aval.Descricao || '';
+
+        const notaArredondada = Math.round(aval.Nota);
+        const radio = document.getElementById('editNota' + notaArredondada);
+        if (radio) {
+            radio.checked = true;
+        }
+
+        const modal = document.getElementById('modalEditarAvaliacao');
+        if (modal) {
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+        }
+    }
+
+    const formEditarAvaliacao = document.getElementById('formEditarAvaliacao');
+    if (formEditarAvaliacao) {
+        formEditarAvaliacao.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(formEditarAvaliacao);
+            formData.append('action', 'editar_avaliacao');
+
+            try {
+                const response = await fetch('/api/avaliacao_handler/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Avaliação atualizada com sucesso!');
+                    fecharModal('modalEditarAvaliacao');
+                    carregarAvaliacoes();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao salvar alterações');
+            }
+        });
+    }
+
+    async function excluirAvaliacao(id) {
+        if (!confirm('Deseja realmente excluir sua avaliação? Essa ação não pode ser desfeita.')) {
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('action', 'deletar');
+            formData.append('id', id);
+
+            const response = await fetch('/api/avaliacao_handler/', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                carregarAvaliacoes();
+            } else {
+                alert('Erro: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Erro ao excluir avaliação:', error);
+            alert('Erro ao excluir avaliação');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarAvaliacoes);
+</script>
+{% endblock %}

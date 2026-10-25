@@ -1,0 +1,79 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}Ta no Mapa - Descubra o Brasil{% endblock %}</title>
+{% block css %}{% endblock %}
+</head>
+<body data-page="{% block page_slug %}{% endblock %}">
+   <header>
+    <div class="logo">
+        <div class="logo-icon">🌍</div>
+        <span>Ta no Mapa</span>
+    </div>
+    <nav>
+        <a href="{% url 'index' %}">Home</a>
+        <a href="{% url 'destinos' %}">Destinos</a>
+
+        {% if user.is_authenticated %}
+            {% if user.is_moderador %}
+                <a href="{% url 'moderador' %}" class="btn-login-nav" style="text-decoration:none;">⚙ Moderação</a>
+            {% endif %}
+            <a href="{% url 'perfil' %}" class="perfil-link">
+                <div class="user-avatar">
+                    {% if user.foto_perfil %}
+                        <img src="{{ user.foto_perfil.url }}"
+                             alt="{{ user.nome }}"
+                             class="user-avatar-img">
+                    {% else %}
+                        👤
+                    {% endif %}
+                </div>
+                <span class="user-name">{{ user.nome }}</span>
+            </a>
+            <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn-login-nav">Entrar</a>
+            <a href="{% url 'cadastro' %}" class="btn-cadastro">Cadastre-se</a>
+        {% endif %}
+    </nav>
+</header>
+
+{% block content %}{% endblock %}
+
+    <footer>
+        <div class="footer-content">
+        {% block footer_content %}
+            <div class="footer-section">
+                <h4>Ta no Mapa</h4>
+                <ul>
+                    <li><a href="#">Sobre nós</a></li>
+                    <li><a href="#">Nossa equipe</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Suporte</h4>
+                <ul>
+                    <li><a href="#">Central de ajuda</a></li>
+                    <li><a href="#">Contato</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Jurídico</h4>
+                <ul>
+                    <li><a href="#">Termos de uso</a></li>
+                    <li><a href="#">Política de privacidade</a></li>
+                </ul>
+            </div>
+        {% endblock %}
+        </div>
+        <div class="footer-bottom">
+            © 2025 Ta no Mapa. Todos os direitos reservados.
+        </div>
+    </footer>
+
+{% block js %}{% endblock %}
+</body>
+</html>

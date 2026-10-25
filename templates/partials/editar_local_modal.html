@@ -1,0 +1,294 @@
+{% comment %}
+Modal de edição de local (usado por core/perfil.html e
+destinos/visualizar_ponto.html). Inclua uma única vez por página, junto com
+{% include "partials/editar_local_modal.html" %}. Depende de fetch para
+'/api/local_handler/' (ações 'obter', 'editar' e 'deletar'), então só
+deve ser incluído em páginas acessíveis a um usuário autenticado.
+{% endcomment %}
+<div id="modalEditarLocal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>Editar Local</h2>
+            <span class="modal-close" onclick="fecharModalEditarLocal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="formEditarLocal">
+                <input type="hidden" id="editLocalId" name="id">
+
+                <div class="form-group">
+                    <label for="editNomePonto">Nome do Local *</label>
+                    <input type="text" id="editNomePonto" name="nome" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editTipoPonto">Tipo *</label>
+                        <select id="editTipoPonto" name="tipo" required>
+                            <option value="">Selecione</option>
+                            <option value="Museu">Museu</option>
+                            <option value="Parque">Parque</option>
+                            <option value="Monumento">Monumento</option>
+                            <option value="Igreja">Igreja</option>
+                            <option value="Restaurante">Restaurante</option>
+                            <option value="Hotel">Hotel</option>
+                            <option value="Praia">Praia</option>
+                            <option value="Teatro">Teatro</option>
+                            <option value="Centro Cultural">Centro Cultural</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editLocalidadePonto">Cidade/Estado *</label>
+                        <input type="text" id="editLocalidadePonto" name="localidade" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editEnderecoPonto">Endereço Completo *</label>
+                    <input type="text" id="editEnderecoPonto" name="endereco" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editBioPonto">Descrição</label>
+                    <textarea id="editBioPonto" name="bio" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editFaixaPrecoPonto">Faixa de preço *</label>
+                    <select id="editFaixaPrecoPonto" name="faixaPreco" required>
+                        <option value="Gratuito">Gratuito</option>
+                        <option value="Baixo">Baixo</option>
+                        <option value="Médio">Médio</option>
+                        <option value="Elevado">Elevado</option>
+                    </select>
+                    <small class="form-hint">Preço que os visitantes costumam pagar neste local.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Fotos do Local (até 4)</label>
+                    <small class="form-hint">A Foto 1 é sempre a capa. Remova uma foto existente para liberar a vaga e escolher uma nova em seu lugar.</small>
+                    <div class="fotos-slots-grid" id="editFotosSlotsGrid"></div>
+                    <input type="hidden" id="editRemoverFotos" name="removerFotos" value="">
+                </div>
+
+                <button type="submit" class="btn-salvar">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const MAX_FOTOS_LOCAL = 4;
+let editFotosAtuais = [];
+let editFotosRemovidasIds = [];
+
+function editFotosVisiveis() {
+    return editFotosAtuais.filter(f => !editFotosRemovidasIds.includes(f.id));
+}
+
+function renderNovoSlotPreview(input) {
+    const preview = document.getElementById('editFotoSlotPreview' + input.dataset.indice);
+    if (!preview) return;
+    preview.innerHTML = '';
+
+    const arquivo = input.files[0];
+    if (!arquivo) return;
+
+    const indice = parseInt(input.dataset.indice, 10);
+    const leitor = new FileReader();
+    leitor.onload = function(e) {
+        const item = document.createElement('div');
+        item.className = 'preview-foto-item';
+        item.innerHTML = `
+            <img src="${e.target.result}" alt="Prévia da foto">
+            ${indice === 0 ? '<span class="preview-foto-capa-tag">Capa</span>' : ''}
+            <button type="button" class="preview-foto-remover" title="Remover foto">×</button>
+        `;
+        item.querySelector('.preview-foto-remover').addEventListener('click', function() {
+            input.value = '';
+            preview.innerHTML = '';
+        });
+        preview.appendChild(item);
+    };
+    leitor.readAsDataURL(arquivo);
+}
+
+function renderEditFotosSlots() {
+    const grid = document.getElementById('editFotosSlotsGrid');
+    const visiveis = editFotosVisiveis();
+
+    let html = '';
+    for (let i = 0; i < MAX_FOTOS_LOCAL; i++) {
+        const fotoExistente = visiveis[i];
+        const tagCapa = i === 0 ? ' <span class="foto-slot-capa-tag">Capa</span>' : '';
+
+        if (fotoExistente) {
+            html += `
+                <div class="foto-slot">
+                    <label>Foto ${i + 1}${tagCapa}</label>
+                    <div class="foto-slot-preview">
+                        <div class="preview-foto-item">
+                            <img src="${fotoExistente.url}" alt="Foto do local">
+                            ${i === 0 ? '<span class="preview-foto-capa-tag">Capa</span>' : ''}
+                            <button type="button" class="preview-foto-remover" title="Remover foto" onclick="removerFotoAtualEdicao(${fotoExistente.id})">×</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="foto-slot">
+                    <label for="editFotoSlot${i}">Foto ${i + 1}${tagCapa}</label>
+                    <input type="file" id="editFotoSlot${i}" class="foto-slot-input edit-foto-slot-input" accept="image/*" data-indice="${i}">
+                    <div class="foto-slot-preview" id="editFotoSlotPreview${i}"></div>
+                </div>
+            `;
+        }
+    }
+    grid.innerHTML = html;
+
+    grid.querySelectorAll('.edit-foto-slot-input').forEach((input) => {
+        input.addEventListener('change', function() {
+            renderNovoSlotPreview(input);
+        });
+    });
+}
+
+window.removerFotoAtualEdicao = function(fotoId) {
+    if (!editFotosRemovidasIds.includes(fotoId)) {
+        editFotosRemovidasIds.push(fotoId);
+    }
+    document.getElementById('editRemoverFotos').value = editFotosRemovidasIds.join(',');
+    renderEditFotosSlots();
+};
+
+window.abrirEdicaoLocal = async function(id) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'obter');
+        formData.append('id', id);
+
+        const response = await fetch('/api/local_handler/', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+
+        if (!result.success) {
+            alert('Erro: ' + result.message);
+            return;
+        }
+
+        const local = result.local;
+        document.getElementById('formEditarLocal').reset();
+
+        document.getElementById('editLocalId').value = local.Id;
+        document.getElementById('editNomePonto').value = local.Nome || '';
+        document.getElementById('editTipoPonto').value = local.Tipo || '';
+        document.getElementById('editLocalidadePonto').value = local.Localidade || '';
+        document.getElementById('editEnderecoPonto').value = local.Endereco || '';
+        document.getElementById('editBioPonto').value = local.Bio || '';
+        document.getElementById('editFaixaPrecoPonto').value = local.FaixaPreco || 'Médio';
+
+        editFotosAtuais = local.FotosDetalhadas || [];
+        editFotosRemovidasIds = [];
+        document.getElementById('editRemoverFotos').value = '';
+        renderEditFotosSlots();
+
+        const modal = document.getElementById('modalEditarLocal');
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error('Erro ao carregar local:', error);
+        alert('Erro ao carregar dados do local. Tente novamente.');
+    }
+};
+
+window.fecharModalEditarLocal = function() {
+    const modal = document.getElementById('modalEditarLocal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+};
+
+window.excluirLocalCard = async function(id) {
+    if (!confirm('Deseja realmente excluir este local? Essa ação não pode ser desfeita.')) {
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'deletar');
+        formData.append('id', id);
+
+        const response = await fetch('/api/local_handler/', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Local excluído com sucesso!');
+            if (typeof window.aoLocalExcluido === 'function') {
+                window.aoLocalExcluido(id);
+            } else {
+                window.location.reload();
+            }
+        } else {
+            alert('Erro: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao excluir local:', error);
+        alert('Erro ao excluir local. Tente novamente.');
+    }
+};
+
+(function() {
+    const form = document.getElementById('formEditarLocal');
+    if (!form) return;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        document.querySelectorAll('#editFotosSlotsGrid .edit-foto-slot-input').forEach((input) => {
+            const arquivo = input.files[0];
+            if (arquivo) formData.append('fotos', arquivo);
+        });
+
+        formData.append('action', 'editar');
+
+        try {
+            const response = await fetch('/api/local_handler/', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message || 'Local atualizado com sucesso!');
+                fecharModalEditarLocal();
+                if (typeof window.aoLocalEditado === 'function') {
+                    window.aoLocalEditado(result.local);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert('Erro: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Erro ao editar local:', error);
+            alert('Erro ao salvar alterações. Tente novamente.');
+        }
+    });
+})();
+
+document.addEventListener('click', function(event) {
+    if (event.target.id === 'modalEditarLocal') {
+        fecharModalEditarLocal();
+    }
+});
+</script>

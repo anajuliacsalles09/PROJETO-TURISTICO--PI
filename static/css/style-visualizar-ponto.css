@@ -1,0 +1,944 @@
+
+
+
+.container-visualizar {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 20px;
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+}
+
+
+.ponto-hero {
+    position: relative;
+    height: 400px;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+    margin-top: 80px;
+    overflow: hidden;
+}
+
+.ponto-hero-slides {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.hero-slide.active {
+    opacity: 1;
+}
+
+.hero-carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.85);
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 6;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1f2937;
+}
+
+.hero-carousel-nav:hover {
+    background: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.hero-carousel-prev {
+    left: 20px;
+}
+
+.hero-carousel-next {
+    right: 20px;
+}
+
+.hero-carousel-contador {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 0.4rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    z-index: 6;
+}
+
+.hero-carousel-dots {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 6;
+}
+
+.hero-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.hero-dot.active {
+    background: white;
+    transform: scale(1.3);
+}
+
+.ponto-hero-slides {
+    cursor: zoom-in;
+}
+
+.hero-ampliar-btn {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    border: none;
+    padding: 0.45rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    z-index: 6;
+    transition: background 0.2s;
+}
+
+.hero-ampliar-btn:hover {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-overlay.show {
+    display: flex;
+}
+
+.lightbox-img {
+    max-width: 90vw;
+    max-height: 88vh;
+    object-fit: contain;
+    border-radius: 6px;
+    user-select: none;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: none;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.lightbox-prev {
+    left: 20px;
+}
+
+.lightbox-next {
+    right: 20px;
+}
+
+.lightbox-contador {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.35rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .lightbox-nav {
+        width: 42px;
+        height: 42px;
+        font-size: 1.6rem;
+    }
+}
+
+.ponto-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+}
+
+.ponto-hero-content {
+    position: relative;
+    z-index: 1;
+    color: white;
+    padding: 2rem 5%;
+    width: 100%;
+}
+
+.ponto-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.ponto-location {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.ponto-rating {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.rating-stars {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.rating-count {
+    opacity: 0.9;
+}
+
+
+.content-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.ponto-info {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.ponto-info h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+}
+
+.ponto-info h3 {
+    font-size: 1.3rem;
+    margin: 1.5rem 0 0.8rem;
+    color: var(--text-dark);
+}
+
+.ponto-endereco {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e1e8ed;
+}
+
+
+.btn-editar-secao {
+    padding: 0.5rem 1rem;
+    background: var(--bg-light);
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-editar-secao:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+
+.galeria-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.galeria-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.galeria-principal {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.galeria-principal img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.galeria-principal img:hover {
+    transform: scale(1.05);
+}
+
+.galeria-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.galeria-nav:hover {
+    background: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.galeria-nav-prev {
+    left: 20px;
+}
+
+.galeria-nav-next {
+    right: 20px;
+}
+
+.galeria-contador {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.galeria-thumbnails {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+}
+
+.thumbnail-item {
+    position: relative;
+    min-width: 120px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.thumbnail-item.active {
+    border-color: var(--primary-color);
+}
+
+.thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.btn-remover-foto-galeria {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: none;
+}
+
+.thumbnail-item:hover .btn-remover-foto-galeria {
+    display: block;
+}
+
+.galeria-vazia {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-gray);
+}
+
+.btn-add-fotos {
+    margin-top: 1rem;
+    padding: 1rem 2rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+
+.avaliacoes-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.avaliacoes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.avaliacoes-header h2 {
+    font-size: 1.8rem;
+    color: var(--text-dark);
+}
+
+.btn-avaliar {
+    padding: 0.8rem 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-avaliar:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.lista-avaliacoes {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.avaliacao-card {
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s;
+}
+
+.avaliacao-card:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+.avaliacao-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.avaliacao-usuario {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.avaliacao-nota {
+    font-size: 1.2rem;
+}
+
+.usuario-nome {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.2rem;
+}
+
+.avaliacao-data {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+}
+
+.avaliacao-texto {
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.avaliacao-acoes {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f0f2f5;
+}
+
+.btn-avaliacao-editar,
+.btn-avaliacao-excluir {
+    border: none;
+    border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-avaliacao-editar {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.btn-avaliacao-editar:hover {
+    background: #ffe8a1;
+}
+
+.btn-avaliacao-excluir {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.btn-avaliacao-excluir:hover {
+    background: #f1aeb5;
+}
+
+
+.content-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.fornecedor-card, .info-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.fornecedor-card h3, .info-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+}
+
+.fornecedor-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    cursor: pointer;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.fornecedor-info:hover {
+    background: var(--bg-light);
+}
+
+.fornecedor-dados {
+    flex: 1;
+}
+
+.fornecedor-nome {
+    font-weight: 600;
+    color: var(--primary-color);
+    transition: opacity 0.3s;
+}
+
+.fornecedor-info:hover .fornecedor-nome {
+    opacity: 0.8;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: var(--text-gray);
+    font-weight: 500;
+}
+
+.info-value {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+
+.lightbox {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox.show {
+    display: flex;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 10001;
+}
+
+.lightbox-content {
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.lightbox-content img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.rating-input input {
+    display: none;
+}
+
+.rating-input label {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rating-input label:hover,
+.rating-input label:hover ~ label,
+.rating-input input:checked ~ label {
+    color: #FFD700;
+}
+
+
+@media (max-width: 1024px) {
+    .container-visualizar {
+        grid-template-columns: 1fr;
+    }
+    
+    .content-sidebar {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .ponto-hero {
+        height: 300px;
+    }
+    
+    .ponto-hero h1 {
+        font-size: 2rem;
+    }
+    
+    .galeria-principal {
+        height: 300px;
+    }
+}
+
+
+
+
+.ponto-info-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    padding: 30px 20px 20px;
+    color: white;
+}
+
+.ponto-info-overlay h3 {
+    font-size: 1.5rem;
+    margin: 0 0 8px 0;
+    font-weight: 700;
+}
+
+.ponto-info-overlay p {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+
+.thumbnail-item {
+    position: relative;
+}
+
+.ponto-numero {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #1F5673;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.ponto-nome-mini {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    padding: 20px 8px 8px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.pontos-detalhados {
+    margin-top: 3rem;
+}
+
+.pontos-detalhados h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-dark);
+}
+
+.ponto-detalhado-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ponto-detalhado-card:hover {
+    border-color: #1F5673;
+    box-shadow: 0 8px 24px rgba(31, 86, 115, 0.15);
+    transform: translateX(8px);
+}
+
+.ponto-numero-badge {
+    width: 48px;
+    height: 48px;
+    background: #1F5673;
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.ponto-detalhado-foto {
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.ponto-detalhado-foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ponto-detalhado-info {
+    flex: 1;
+}
+
+.ponto-detalhado-info h4 {
+    font-size: 1.3rem;
+    margin: 0 0 8px 0;
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+.ponto-tipo,
+.ponto-local {
+    font-size: 0.95rem;
+    color: var(--text-gray);
+    margin: 4px 0;
+}
+
+.ponto-desc {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    margin-top: 8px;
+    line-height: 1.6;
+}
+
+.ponto-arrow {
+    font-size: 2rem;
+    color: #1F5673;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.ponto-detalhado-card:hover .ponto-arrow {
+    transform: translateX(8px);
+}
+
+
+@media (max-width: 768px) {
+    .ponto-info-overlay h3 {
+        font-size: 1.2rem;
+    }
+
+    .ponto-info-overlay p {
+        font-size: 0.9rem;
+    }
+
+    .ponto-detalhado-card {
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .ponto-numero-badge {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .ponto-detalhado-foto {
+        width: 100%;
+        height: 200px;
+    }
+
+    .ponto-arrow {
+        display: none;
+    }
+}

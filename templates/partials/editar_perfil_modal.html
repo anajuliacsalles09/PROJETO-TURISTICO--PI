@@ -1,0 +1,183 @@
+{% comment %}
+Modal de edição do perfil do usuário logado (nome de exibição e foto de
+perfil) e exclusão da própria conta. Inclua uma única vez em
+core/perfil.html. Depende de fetch para '/api/perfil_handler/'
+(ações 'editar_perfil' e 'excluir_perfil').
+{% endcomment %}
+<div id="modalEditarPerfil" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Editar Perfil</h2>
+            <span class="modal-close" onclick="fecharModalEditarPerfil()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="formEditarPerfil">
+                <div class="form-group">
+                    <label for="editNomeUsuario">Nome de exibição *</label>
+                    <input type="text" id="editNomeUsuario" name="nome" value="{{ user.nome }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Foto de perfil</label>
+                    <img id="editFotoPerfilPreview" class="foto-perfil-preview-atual"
+                         {% if user.foto_perfil %}src="{{ user.foto_perfil.url }}"{% else %}style="display:none;"{% endif %}
+                         alt="Foto de perfil atual">
+                    <input type="file" id="editFotoPerfilUsuario" name="fotoPerfil" accept="image/*">
+                    <small class="form-hint">Envie um arquivo apenas se quiser trocar a foto atual.</small>
+                </div>
+
+                <button type="submit" class="btn-salvar">Salvar Alterações</button>
+            </form>
+
+            <div class="perfil-zona-perigo">
+                <h3>Zona de perigo</h3>
+                <p>Excluir sua conta é uma ação permanente: seu perfil, locais e avaliações serão removidos e você será desconectado.</p>
+                <button type="button" class="btn-excluir-conta" onclick="excluirPerfilUsuario()">Excluir minha conta</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .foto-perfil-preview-atual {
+        display: block;
+        width: 96px;
+        height: 96px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin-bottom: 8px;
+        border: 1px solid #e1e8ed;
+    }
+
+    .perfil-zona-perigo {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #e1e8ed;
+    }
+
+    .perfil-zona-perigo h3 {
+        color: #dc3545;
+        margin-bottom: 8px;
+    }
+
+    .perfil-zona-perigo p {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+
+    .btn-excluir-conta {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #dc3545;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-excluir-conta:hover {
+        background: #b02a37;
+    }
+</style>
+
+<script>
+window.abrirModalEditarPerfil = function() {
+    const modal = document.getElementById('modalEditarPerfil');
+    if (modal) {
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+    }
+};
+
+window.fecharModalEditarPerfil = function() {
+    const modal = document.getElementById('modalEditarPerfil');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+};
+
+(function() {
+    const preview = document.getElementById('editFotoPerfilPreview');
+    const input = document.getElementById('editFotoPerfilUsuario');
+    if (input) {
+        input.addEventListener('change', function() {
+            const arquivo = input.files && input.files[0];
+            if (!arquivo) return;
+            const leitor = new FileReader();
+            leitor.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            leitor.readAsDataURL(arquivo);
+        });
+    }
+
+    const form = document.getElementById('formEditarPerfil');
+    if (!form) return;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        formData.append('action', 'editar_perfil');
+
+        try {
+            const response = await fetch('/api/perfil_handler/', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                alert('Perfil atualizado com sucesso!');
+                window.location.reload();
+            } else {
+                alert('Erro: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Erro ao editar perfil:', error);
+            alert('Erro ao salvar alterações. Tente novamente.');
+        }
+    });
+})();
+
+window.excluirPerfilUsuario = async function() {
+    if (!confirm('Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita.')) {
+        return;
+    }
+    if (!confirm('Última confirmação: todos os seus dados serão apagados permanentemente. Deseja continuar?')) {
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'excluir_perfil');
+
+        const response = await fetch('/api/perfil_handler/', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Sua conta foi excluída.');
+            window.location.href = result.redirect || '/';
+        } else {
+            alert('Erro: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao excluir perfil:', error);
+        alert('Erro ao excluir conta. Tente novamente.');
+    }
+};
+
+document.addEventListener('click', function(event) {
+    if (event.target.id === 'modalEditarPerfil') {
+        fecharModalEditarPerfil();
+    }
+});
+</script>
